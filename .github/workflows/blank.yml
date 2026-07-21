@@ -17,29 +17,42 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Extract CrossChatPlus.zip
+      # ------ 诊断阶段 ------
+      - name: List root & extract if needed
         run: |
+          echo "=== Files in root ==="
           ls -la
-          if [ -f CrossChatPlus.zip ]; then
-            unzip -q CrossChatPlus.zip
-            echo "Extracted CrossChatPlus.zip"
-            ls -la
+          if [ -f "CrossChatPlus.zip" ]; then
+            echo "=== Contents of zip ==="
+            unzip -l CrossChatPlus.zip | head -30
+            echo "=== Extracting ==="
+            unzip -q -o CrossChatPlus.zip
+            echo "=== After extraction ==="
+            ls -laR | head -40
           else
-            echo "No CrossChatPlus.zip found, assuming already extracted"
+            echo "No CrossChatPlus.zip found. Checking other files..."
           fi
+          echo "=== Searching for build.gradle ==="
+          find . -name "build.gradle" -type f
+          echo "=== Searching for gradlew ==="
+          find . -name "gradlew" -type f
 
-      - name: Find build directory
-        id: find-dir
-        run: |
-          BD=$(find . -name "build.gradle" -exec dirname {} \; | head -1)
-          echo "BuildDir=$BD" >> "$GITHUB_OUTPUT"
-          echo "Found: $BD"
-
+      # ------ 构建 ------
       - name: Build with Gradle
         run: |
-          cd "${{ steps.find-dir.outputs.BuildDir }}"
-          chmod +x gradlew
-          ./gradlew build
+          BD=$(find . -name "build.gradle" -exec dirname {} \; | head -1)
+          if [ -z "$BD" ]; then
+            echo "ERROR: build.gradle not found"
+            exit 1
+          fi
+          echo "Build directory: $BD"
+          cd "$BD"
+          chmod +x gradlew 2>/dev/null || echo "No gradlew, will try gradle wrapper"
+          if [ -f "gradlew" ]; then
+            ./gradlew build
+          else
+            gradle build
+          fi
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
