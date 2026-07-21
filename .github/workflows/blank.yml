@@ -7,6 +7,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CrossChatPlus.zip/CrossChatPlus  # ← 这里指定正确目录
+
     steps:
       - uses: actions/checkout@v4
 
@@ -16,11 +20,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Show directory structure (debug)
-        run: find . -name "*.gradle" -o -name "gradlew" | head -20
+      - name: Show directory structure
+        run: find . -maxdepth 3 -name "*.gradle" -o -name "gradlew"
 
       - name: Build with Gradle
         run: |
@@ -31,5 +32,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CrossChatPlus-jar
-          path: build/libs/CrossChatPlus-*.jar
+          path: CrossChatPlus.zip/CrossChatPlus/build/libs/CrossChatPlus-*.jar
           retention-days: 7
