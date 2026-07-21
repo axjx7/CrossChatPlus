@@ -7,9 +7,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: CrossChatPlus.zip/CrossChatPlus  # ← 这里指定正确目录
 
     steps:
       - uses: actions/checkout@v4
@@ -20,11 +17,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Show directory structure
-        run: find . -maxdepth 3 -name "*.gradle" -o -name "gradlew"
+      - name: Find build directory
+        id: find-dir
+        run: |
+          pwd
+          ls -laR | head -50   # 打印前50行目录结构
+          BD=$(find . -name "build.gradle" -exec dirname {} \; | head -1)
+          echo "BuildDir=$BD" >> "$GITHUB_OUTPUT"
+          echo "Found: $BD"
 
       - name: Build with Gradle
         run: |
+          cd "${{ steps.find-dir.outputs.BuildDir }}"
+          ls -la
           chmod +x gradlew
           ./gradlew build
 
@@ -32,5 +37,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CrossChatPlus-jar
-          path: CrossChatPlus.zip/CrossChatPlus/build/libs/CrossChatPlus-*.jar
+          path: |
+            **/build/libs/CrossChatPlus-*.jar
           retention-days: 7
