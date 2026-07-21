@@ -17,11 +17,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Extract CrossChatPlus.zip
+        run: |
+          ls -la
+          if [ -f CrossChatPlus.zip ]; then
+            unzip -q CrossChatPlus.zip
+            echo "Extracted CrossChatPlus.zip"
+            ls -la
+          else
+            echo "No CrossChatPlus.zip found, assuming already extracted"
+          fi
+
       - name: Find build directory
         id: find-dir
         run: |
-          pwd
-          ls -laR | head -50   # 打印前50行目录结构
           BD=$(find . -name "build.gradle" -exec dirname {} \; | head -1)
           echo "BuildDir=$BD" >> "$GITHUB_OUTPUT"
           echo "Found: $BD"
@@ -29,7 +38,6 @@ jobs:
       - name: Build with Gradle
         run: |
           cd "${{ steps.find-dir.outputs.BuildDir }}"
-          ls -la
           chmod +x gradlew
           ./gradlew build
 
