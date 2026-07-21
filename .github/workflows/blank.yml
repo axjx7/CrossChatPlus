@@ -1,9 +1,7 @@
-name: Build from ZIP
+name: Build CrossChatPlus
 
 on:
   push:
-    paths:
-      - 'CrossChatPlus.zip'
   workflow_dispatch:
 
 jobs:
@@ -21,28 +19,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Unzip source
-        run: |
-          if [ -f CrossChatPlus.zip ]; then
-            echo "Found CrossChatPlus.zip, extracting..."
-            unzip -o CrossChatPlus.zip
-            if [ -d CrossChatPlus ]; then
-              rsync -a CrossChatPlus/ ./ --exclude=.github --exclude=.git
-              rm -rf CrossChatPlus
-            fi
-            echo "Extraction complete."
-          else
-            echo "No CrossChatPlus.zip found, using existing sources."
-          fi
+      - name: Show directory structure (debug)
+        run: find . -name "*.gradle" -o -name "gradlew" | head -20
 
       - name: Build with Gradle
         run: |
-          chmod +x gradlew 2>/dev/null || true
-          if [ -f gradlew ]; then
-            ./gradlew build
-          else
-            gradle build
-          fi
+          chmod +x gradlew
+          ./gradlew build
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
