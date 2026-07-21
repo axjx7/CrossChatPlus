@@ -17,40 +17,36 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # ------ 诊断阶段 ------
-      - name: List root & extract if needed
+      # -------- 解压 + 诊断 --------
+      - name: Extract and diagnose
         run: |
-          echo "=== Files in root ==="
+          echo "=== Root files ==="
           ls -la
-          if [ -f "CrossChatPlus.zip" ]; then
-            echo "=== Contents of zip ==="
-            unzip -l CrossChatPlus.zip | head -30
-            echo "=== Extracting ==="
-            unzip -q -o CrossChatPlus.zip
-            echo "=== After extraction ==="
-            ls -laR | head -40
-          else
-            echo "No CrossChatPlus.zip found. Checking other files..."
-          fi
+          echo "=== Extracting CrossChatPlus.zip ==="
+          unzip -o CrossChatPlus.zip
+          echo "=== After extract: first 40 lines of tree ==="
+          find . -maxdepth 4 -type f | head -40
           echo "=== Searching for build.gradle ==="
           find . -name "build.gradle" -type f
           echo "=== Searching for gradlew ==="
           find . -name "gradlew" -type f
 
-      # ------ 构建 ------
-      - name: Build with Gradle
+      # -------- 构建 --------
+      - name: Build
         run: |
           BD=$(find . -name "build.gradle" -exec dirname {} \; | head -1)
           if [ -z "$BD" ]; then
-            echo "ERROR: build.gradle not found"
+            echo "ERROR: build.gradle not found!"
             exit 1
           fi
-          echo "Build directory: $BD"
+          echo "Build dir = $BD"
           cd "$BD"
-          chmod +x gradlew 2>/dev/null || echo "No gradlew, will try gradle wrapper"
           if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            echo "Running: ./gradlew build"
             ./gradlew build
           else
+            echo "gradlew not found, trying with system gradle..."
             gradle build
           fi
 
@@ -58,6 +54,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CrossChatPlus-jar
-          path: |
-            **/build/libs/CrossChatPlus-*.jar
+          path: "**/build/libs/*.jar"
           retention-days: 7
